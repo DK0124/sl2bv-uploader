@@ -9,6 +9,8 @@ from speed_controller import SpeedController, BehaviorMode
 class BVShopBatchUploader(QObject):
     product_progress_signal = pyqtSignal(str, int, object, object, str)
     all_done_signal = pyqtSignal(int, int, int, list)
+    paused_signal = pyqtSignal()
+    resumed_signal = pyqtSignal()
 
     def __init__(
         self, src_dir, username, password, max_workers=3,
@@ -99,14 +101,17 @@ class BVShopBatchUploader(QObject):
 
     def stop(self):
         self._should_stop = True
+        self._pause_event.set()  # 防止剛好暫停時 stop 無效
 
     def pause(self):
         self._should_pause = True
         self._pause_event.clear()
+        self.paused_signal.emit()
 
     def resume(self):
         self._should_pause = False
         self._pause_event.set()
+        self.resumed_signal.emit()
 
     def batch_upload(self):
         asyncio.run(self.batch_upload_async())
@@ -126,6 +131,7 @@ class BVShopBatchUploader(QObject):
             self.round_status_callback(1, MAX_RETRIES)
 
         while retries < MAX_RETRIES and all_fail and not self._should_stop:
+            await self._pause_event.wait()
             if self.round_status_callback is not None:
                 self.round_status_callback(retries+1, MAX_RETRIES)
 
@@ -135,6 +141,7 @@ class BVShopBatchUploader(QObject):
 
             # 1. 檢查檔案齊全
             for pname in all_fail:
+                await self._pause_event.wait()
                 if self._should_stop:
                     break
                 pdir = pname_to_pdir[pname]
@@ -169,6 +176,9 @@ class BVShopBatchUploader(QObject):
 
                     tasks = []
                     for pdir in checked_product_dirs:
+                        await self._pause_event.wait()
+                        if self._should_stop:
+                            break
                         pname = os.path.basename(pdir)
                         info_path = os.path.join(pdir, "product_info.json")
                         output_path = os.path.join(pdir, "product_output.json")
@@ -200,12 +210,12 @@ class BVShopBatchUploader(QObject):
             # 3. 只對本輪剛失敗且有 slug 的商品，做一次 head 檢查（如已停止則略過）
             still_fail = []
             for pname, errmsg in fail_this_round:
+                await self._pause_event.wait()
                 if self._should_stop:
                     break
                 pdir = pname_to_pdir.get(pname)
                 slug = self.get_slug(pdir) if pdir else ""
                 if slug:
-                    # 做一次（非多次 polling），並可被停止
                     if self._should_stop:
                         still_fail.append((pname, errmsg))
                         continue
