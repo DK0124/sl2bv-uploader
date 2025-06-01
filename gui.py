@@ -5,15 +5,16 @@ import time
 import psutil
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QFileDialog, QLineEdit, QSpinBox, QGridLayout, QProgressBar, QTextEdit, QFrame, QCheckBox, QComboBox, QSizePolicy
+    QFileDialog, QLineEdit, QSpinBox, QGridLayout, QProgressBar, QTextEdit, QFrame, QCheckBox, QComboBox, QSizePolicy, QDialog
 )
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QCursor
 
 from batch_uploader import BVShopBatchUploader
 from speed_controller import BehaviorMode
 
 CONFIG_FILE = "config.json"
+FAILED_LIST_FILE = "failed_list.json"
 
 def suggest_max_workers():
     cpu = os.cpu_count() or 2
@@ -22,50 +23,33 @@ def suggest_max_workers():
     max_safe = min(cpu * 2, max_by_ram)
     return min(max_safe, 16)
 
-class ExpandableLogBox(QWidget):
-    def __init__(self, log_text="", parent=None):
+class LogDialog(QDialog):
+    def __init__(self, title, log_text, parent=None):
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.toggle_btn = QPushButton("展開log", self)
-        self.toggle_btn.setCheckable(True)
-        self.toggle_btn.setChecked(False)
-        self.toggle_btn.clicked.connect(self.toggle)
+        self.setWindowTitle(f"{title} - 詳細Log")
+        self.resize(800, 500)
+        layout = QVBoxLayout(self)
+        label = QLabel(title)
+        label.setStyleSheet("font-weight:bold;font-size:1.1em;margin-bottom:8px;")
+        layout.addWidget(label)
         self.log_edit = QTextEdit(self)
         self.log_edit.setReadOnly(True)
-        self.log_edit.setFixedHeight(70)
-        self.log_edit.hide()
-        self.layout.addWidget(self.toggle_btn)
-        self.layout.addWidget(self.log_edit)
-        self.setLayout(self.layout)
-
-    def append_log(self, log_text):
-        if not log_text:
-            return
-        current = self.log_edit.toPlainText()
-        if current and not current.endswith('\n'):
-            current += '\n'
-        self.log_edit.setPlainText(current + log_text)
-        self.log_edit.moveCursor(self.log_edit.textCursor().End)
-
-    def set_log(self, log_text):
         self.log_edit.setPlainText(log_text)
-
-    def toggle(self):
-        if self.toggle_btn.isChecked():
-            self.log_edit.show()
-            self.toggle_btn.setText("收合log")
-        else:
-            self.log_edit.hide()
-            self.toggle_btn.setText("展開log")
+        layout.addWidget(self.log_edit)
+        btn = QPushButton("關閉")
+        btn.clicked.connect(self.accept)
+        layout.addWidget(btn, alignment=Qt.AlignRight)
+        self.setLayout(layout)
 
 class ProductProgressItem(QWidget):
-    def __init__(self, name):
+    def __init__(self, name, show_log_callback):
         super().__init__()
         self.setObjectName("ProductProgressItem")
+        self.show_log_callback = show_log_callback
+        self._log_text = ""
         layout = QVBoxLayout(self)
-        layout.setSpacing(4)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(5)
+        layout.setContentsMargins(14, 14, 14, 14)
 
         self.name_label = QLabel(name, self)
         self.name_label.setAlignment(Qt.AlignCenter)
@@ -84,17 +68,17 @@ class ProductProgressItem(QWidget):
         stat_hbox.addWidget(self.status_icon)
         self.status_label = QLabel("", self)
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_label.setStyleSheet("font-size: 1.08em")
+        self.status_label.setStyleSheet("font-size: 1.09em")
         stat_hbox.addWidget(self.status_label)
         layout.addLayout(stat_hbox, stretch=0)
 
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
-        self.progress_bar.setFixedHeight(18)
+        self.progress_bar.setFixedHeight(22)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                border-radius: 8px;
+                border-radius: 9px;
                 text-align: center;
                 font-weight: bold;
                 background: #202428;
@@ -104,16 +88,15 @@ class ProductProgressItem(QWidget):
                     x1:0, y1:0, x2:1, y2:0,
                     stop:0 #ffe066, stop:1 #ffb400
                 );
-                border-radius: 8px;
+                border-radius: 9px;
             }
         """)
         layout.addWidget(self.progress_bar, stretch=0)
 
-        self.logbox = ExpandableLogBox("", self)
-        self.logbox.setStyleSheet("margin-top: 3px; border:none;")
-        layout.addWidget(self.logbox, stretch=0)
+        # 註冊點擊事件（點擊整個卡片或進度條都可開log）
+        self.progress_bar.mousePressEvent = self.show_log
+        self.mousePressEvent = self.show_log
 
-        # 美觀邊框與陰影，改用Qt支援格式
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
                 border: 2px solid #444444;
@@ -131,7 +114,7 @@ class ProductProgressItem(QWidget):
     def update_progress(self, percent, detail_log):
         self.progress_bar.setValue(percent)
         if detail_log:
-            self.logbox.append_log(detail_log)
+            self._log_text += ("\n" if self._log_text else "") + detail_log
 
     def set_status(self, success, elapsed, detail_log):
         if success is None:
@@ -169,7 +152,13 @@ class ProductProgressItem(QWidget):
                 }
             """)
         if detail_log:
-            self.logbox.append_log(detail_log)
+            self._log_text += ("\n" if self._log_text else "") + detail_log
+
+    def show_log(self, event):
+        if self._log_text:
+            self.show_log_callback(self.name_label.text(), self._log_text)
+        else:
+            self.show_log_callback(self.name_label.text(), "（暫無Log）")
 
 class BVShopMainWindow(QWidget):
     def __init__(self):
@@ -286,14 +275,20 @@ class BVShopMainWindow(QWidget):
 
         btn_layout = QHBoxLayout()
         self.start_btn = QPushButton("開始批次上架")
-        self.stop_btn = QPushButton("終止")
+        self.stop_btn = QPushButton("停止")
+        self.retry_failed_btn = QPushButton("重跑失敗商品")
+        self.exit_btn = QPushButton("結束程式")
         btn_layout.addWidget(self.start_btn)
         btn_layout.addWidget(self.stop_btn)
+        btn_layout.addWidget(self.retry_failed_btn)
+        btn_layout.addWidget(self.exit_btn)
         main_layout.addLayout(btn_layout)
 
         self.setLayout(main_layout)
         self.start_btn.clicked.connect(self.start_batch_upload)
         self.stop_btn.clicked.connect(self.stop_batch_upload)
+        self.retry_failed_btn.clicked.connect(self.retry_failed_uploads)
+        self.exit_btn.clicked.connect(self.close)
 
         self.estimate_timer = QTimer(self)
         self.estimate_timer.timeout.connect(self.update_time_estimate)
@@ -409,7 +404,6 @@ class BVShopMainWindow(QWidget):
         status["progress"] = percent
         if detail_log:
             status["log"] = (status["log"] + "\n" + detail_log).strip()
-        # 狀態確定
         if success is None:
             status["status"] = "running"
         elif success:
@@ -419,10 +413,9 @@ class BVShopMainWindow(QWidget):
             status["status"] = "fail"
             self.fail_count += 1
 
-        # 只顯示「下載中/執行中」與「失敗」
         if status["status"] in ["running", "fail"]:
             if not status.get("widget"):
-                status["widget"] = ProductProgressItem(product_name)
+                status["widget"] = ProductProgressItem(product_name, self.show_log_dialog)
                 self.product_widgets[product_name] = status["widget"]
                 self.re_layout_grid()
             status["widget"].update_progress(percent, detail_log)
@@ -434,6 +427,10 @@ class BVShopMainWindow(QWidget):
 
         self.update_summary()
 
+    def show_log_dialog(self, product_name, log_text):
+        dlg = LogDialog(product_name, log_text, self)
+        dlg.exec_()
+
     def batch_all_done(self, total, success, fail, fail_list):
         self.estimate_timer.stop()
         elapsed = int(time.time() - self.start_time)
@@ -442,6 +439,7 @@ class BVShopMainWindow(QWidget):
         self.summary_label.setText(
             f"全部完成：成功 {success}/{total}，失敗 {fail}　總花費 {elapsed // 60}分{elapsed % 60}秒"
         )
+        self.save_failed_list(fail_list)
 
     def update_time_estimate(self):
         elapsed = time.time() - self.start_time if self.start_time else 0
@@ -487,7 +485,7 @@ class BVShopMainWindow(QWidget):
         self.clear_widgets()
         show_list = [k for k, v in self.product_status.items() if v["status"] in ["running", "fail"]]
         for pname in show_list:
-            widget = ProductProgressItem(pname)
+            widget = ProductProgressItem(pname, self.show_log_dialog)
             self.product_status[pname]["widget"] = widget
             self.product_widgets[pname] = widget
         self.re_layout_grid()
@@ -522,6 +520,77 @@ class BVShopMainWindow(QWidget):
             self.estimate_timer.stop()
             self.summary_label.setText("⚠️ 已強制終止所有上架任務")
             self.overall_progress.setFormat("已終止")
+
+    def retry_failed_uploads(self):
+        src_dir = self.dir_edit.text()
+        username = self.username_edit.text()
+        password = self.password_edit.text()
+        threads = self.threads_spin.value()
+        domain = self.domain_edit.text().strip()
+        headless = self.headless_checkbox.isChecked()
+        behavior_mode = self.get_behavior_mode()
+        self._current_round = 1
+        self._max_retries = 5
+        self.summary_label.setText("重跑失敗商品中...")
+        if not os.path.isdir(src_dir):
+            self.summary_label.setText("來源資料夾不存在")
+            return
+        if not domain:
+            self.summary_label.setText("請輸入主網域")
+            return
+        if not os.path.exists(FAILED_LIST_FILE):
+            self.summary_label.setText("沒有失敗商品可重跑")
+            return
+        with open(FAILED_LIST_FILE, "r", encoding="utf-8") as f:
+            failed = json.load(f)
+        product_dirs = []
+        for name in failed:
+            pdir = os.path.join(src_dir, name)
+            if os.path.isdir(pdir) and \
+               os.path.exists(os.path.join(pdir, "product_info.json")) and \
+               os.path.exists(os.path.join(pdir, "product_output.json")):
+                product_dirs.append(pdir)
+        if not product_dirs:
+            self.summary_label.setText("失敗商品資料夾不存在或檔案不齊全")
+            return
+        self.total_count = len(product_dirs)
+        self.success_count = 0
+        self.fail_count = 0
+        self.start_time = time.time()
+        self.product_status = {}
+        self.clear_widgets()
+        for p in product_dirs:
+            pname = os.path.basename(p)
+            self.product_status[pname] = {
+                "status": "waiting", "progress": 0, "log": "", "widget": None
+            }
+        self.update_summary()
+        self.refresh_widgets()
+        self.bv_batch_uploader = BVShopBatchUploader(
+            src_dir=src_dir,
+            username=username,
+            password=password,
+            max_workers=threads,
+            product_domain=domain,
+            headless=headless,
+            only_failed=failed,
+            behavior_mode=behavior_mode,
+            speed_status_callback=None,
+            round_status_callback=None
+        )
+        self.bv_batch_uploader.product_progress_signal.connect(self.update_product_progress)
+        self.bv_batch_uploader.all_done_signal.connect(self.batch_all_done)
+        import threading
+        def runner():
+            self.bv_batch_uploader.batch_upload()
+        threading.Thread(target=runner, daemon=True).start()
+        self.estimate_timer.start(1000)
+        self.update_time_estimate()
+
+    def save_failed_list(self, fail_list):
+        failed = [item[0] for item in fail_list]
+        with open(FAILED_LIST_FILE, "w", encoding="utf-8") as f:
+            json.dump(failed, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
