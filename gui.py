@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QLineEdit, QSpinBox, QGridLayout, QProgressBar, QFrame, QCheckBox, QComboBox, QSizePolicy, QDialog, QTextEdit
 )
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QFont, QColor, QPalette
+from PyQt5.QtGui import QFont, QColor, QPalette, QFontMetrics
 
 from batch_uploader import BVShopBatchUploader
 from speed_controller import BehaviorMode
@@ -69,17 +69,32 @@ class ProductProgressItem(QWidget):
         self.show_log_callback = show_log_callback
         self._log_text = ""
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(30, 20, 30, 20)
+        layout.setSpacing(7)
+        layout.setContentsMargins(30, 12, 30, 12)
 
+        # 商品名稱獨立一行，超長自動省略，最大寬限制
         self.name_label = QLabel(name, self)
         self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         font = QFont("SF Pro Text", 11)
         font.setWeight(QFont.DemiBold)
         self.name_label.setFont(font)
-        self.name_label.setStyleSheet("color:#e5e6ea; margin-bottom: 2px; letter-spacing:0.2px;")
+        self.name_label.setStyleSheet("""
+            color:#e5e6ea; margin-bottom: 2px; letter-spacing:0.2px;
+        """)
+        self.name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.name_label.setMaximumHeight(28)
+        self.name_label.setMinimumWidth(100)
+        self.name_label.setMaximumWidth(440)
+        self.name_label.setWordWrap(False)
+        self.name_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.name_label.setToolTip(name)
+        # 手動 elide（...）處理
+        fm = QFontMetrics(self.name_label.font())
+        if fm.width(name) > 420:
+            self.name_label.setText(fm.elidedText(name, Qt.ElideRight, 420))
         layout.addWidget(self.name_label, stretch=0)
 
+        # 狀態icon與文字一行
         stat_hbox = QHBoxLayout()
         stat_hbox.setSpacing(13)
         self.status_icon = QLabel(self)
@@ -90,8 +105,10 @@ class ProductProgressItem(QWidget):
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_label.setStyleSheet("font-size:1.11em; color: #e5e6ea; font-weight: 500;")
         stat_hbox.addWidget(self.status_label)
+        stat_hbox.addStretch(1)
         layout.addLayout(stat_hbox, stretch=0)
 
+        # 進度條一整行
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setFixedHeight(32)
@@ -103,13 +120,14 @@ class ProductProgressItem(QWidget):
                 font-weight: 520;
                 background: #1b2230;
                 color: #e5e6ea;
-                font-size: 1.15em;
+                font-size: 1.13em;
             }
             QProgressBar::chunk {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #69b9ff, stop:1 #7f53ff);
                 border-radius: 14px;
             }
         """)
+        self.progress_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         layout.addWidget(self.progress_bar, stretch=0)
 
         self.progress_bar.mousePressEvent = self.show_log
@@ -154,7 +172,7 @@ class BVShopMainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("BV SHOP 自動上架")
-        self.resize(1920, 1080)
+        self.resize(1200, 900)  # 可調整大小
         self.bv_batch_uploader = None
         self.product_status = {}
         self.product_widgets = {}
@@ -301,7 +319,7 @@ class BVShopMainWindow(QWidget):
                 font-weight: bold;
                 color: #e5e6ea;
                 margin: 30px 130px 26px 130px;
-                min-width: 1100px;
+                min-width: 600px;
             }
             QProgressBar::chunk {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #69b9ff, stop:1 #7f53ff);
@@ -313,8 +331,8 @@ class BVShopMainWindow(QWidget):
 
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(54)
-        self.grid_layout.setContentsMargins(66, 40, 66, 40)
+        self.grid_layout.setSpacing(42)
+        self.grid_layout.setContentsMargins(36, 20, 36, 20)
         self.grid_container.setLayout(self.grid_layout)
         main_layout.addWidget(self.grid_container, stretch=1)
 
@@ -356,7 +374,7 @@ class BVShopMainWindow(QWidget):
 
         self.estimate_timer = QTimer(self)
         self.estimate_timer.timeout.connect(self.update_time_estimate)
-        self.setMinimumSize(1920, 1080)
+        self.setMinimumSize(900, 600)  # 可縮到很小
 
         app_palette = self.palette()
         app_palette.setColor(QPalette.Window, QColor("#181c20"))
@@ -520,8 +538,13 @@ class BVShopMainWindow(QWidget):
             avg = elapsed / done
             remaining = total - done
             left = int(avg * remaining)
+            # 只顯示總 summary 預估，不進入單一商品
             self.summary_label.setText(
-                f"{self.summary_label.text()}　預估剩餘 {left // 60}分{left % 60}秒"
+                f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}　預估剩餘 {left // 60}分{left % 60}秒"
+            )
+        else:
+            self.summary_label.setText(
+                f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}"
             )
 
     def update_summary(self):
@@ -534,9 +557,11 @@ class BVShopMainWindow(QWidget):
             self.overall_progress.setFormat(f"{percent_total}%")
         else:
             self.overall_progress.setVisible(False)
-        self.summary_label.setText(
-            f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}"
-        )
+        # 預估剩餘只在 update_time_estimate 裡統一處理
+        if not self.estimate_timer.isActive():
+            self.summary_label.setText(
+                f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}"
+            )
 
     def clear_widgets(self):
         for i in reversed(range(self.grid_layout.count())):
@@ -570,8 +595,8 @@ class BVShopMainWindow(QWidget):
         if not items:
             return
         w = self.width()
-        card_width = 400
-        grid_w = max(1, w // (card_width + 28))
+        card_width = 480
+        grid_w = max(1, w // (card_width + 32))
         if grid_w < 1:
             grid_w = 1
         for i in reversed(range(self.grid_layout.count())):
