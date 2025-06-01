@@ -36,7 +36,7 @@ class LogDialog(QDialog):
         self.log_edit.setReadOnly(True)
         self.log_edit.setPlainText(log_text)
         self.log_edit.setStyleSheet("""
-            background: #23293a;
+            background: #22273a;
             border-radius: 20px;
             color: #f8fafd;
             font-size: 1.08em;
@@ -46,16 +46,16 @@ class LogDialog(QDialog):
         btn = QPushButton("關閉")
         btn.setStyleSheet("""
             QPushButton {
-                background: #2a3654;
+                background: #244080;
                 border: none;
                 border-radius: 15px;
                 padding: 12px 44px;
                 font-size: 1.18em;
-                color: #549cf6;
+                color: #a7c8ff;
             }
             QPushButton:hover {
-                background: #344769;
-                color: #7ebdff;
+                background: #3756a8;
+                color: #fff;
             }
         """)
         btn.clicked.connect(self.accept)
@@ -101,12 +101,12 @@ class ProductProgressItem(QWidget):
                 border-radius: 14px;
                 text-align: center;
                 font-weight: 520;
-                background: #22242c;
+                background: #1b2230;
                 color: #f8fafd;
                 font-size: 1.15em;
             }
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #62b3ff, stop:1 #7f53ff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #69b9ff, stop:1 #7f53ff);
                 border-radius: 14px;
             }
         """)
@@ -117,13 +117,13 @@ class ProductProgressItem(QWidget):
 
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
-                border: 2.2px solid #282b3c;
+                border: 2.2px solid #24304a;
                 border-radius: 32px;
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #23293a, stop:1 #1a1c23);
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #233052, stop:1 #181c24);
             }
             QWidget#ProductProgressItem:hover {
-                border: 2.2px solid #62b3ff;
-                background: #262a38;
+                border: 2.2px solid #69b9ff;
+                background: #232a3d;
             }
         """)
         self.setLayout(layout)
@@ -135,9 +135,8 @@ class ProductProgressItem(QWidget):
             self._log_text += ("\n" if self._log_text else "") + detail_log
 
     def set_status(self, success, elapsed, detail_log):
-        # iOS質感icon: 藍圓/綠勾/紅叉 + 大字
         if success is None:
-            self.status_icon.setText('<span style="font-size:22px; color:#62b3ff;">●</span>')
+            self.status_icon.setText('<span style="font-size:22px; color:#69b9ff;">●</span>')
             self.status_label.setText("進行中")
         elif success:
             self.status_icon.setText('<span style="font-size:22px; color:#66e08c;">✔</span>')
@@ -176,23 +175,32 @@ class BVShopMainWindow(QWidget):
         ctl_wrap = QFrame()
         ctl_wrap.setFrameShape(QFrame.StyledPanel)
         ctl_wrap.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #23293a, stop:1 #181a20);
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #27355a, stop:1 #181c20);
             border-radius: 34px; border:none;
         """)
         ctl_layout = QVBoxLayout()
-        ctl_layout.setSpacing(20)
+        ctl_layout.setSpacing(22)
         ctl_layout.setContentsMargins(44, 32, 44, 32)
 
-        lbl_style = "color:#f8fafd;font-weight:500;margin-right:6px;"
+        lbl_style = "color:#f8fafd;font-weight:600;font-size:1.13em;margin-right:8px;"
 
         row1 = QHBoxLayout()
         self.dir_edit = QLineEdit()
         self.dir_edit.setPlaceholderText("來源資料夾")
-        self.dir_edit.setStyleSheet("padding:14px 28px; border-radius:18px; background:#20222c; color:#f8fafd; font-size:1.10em;")
+        self.dir_edit.setStyleSheet("""
+            padding:14px 28px; border-radius:18px; background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; font-size:1.10em; border:2px solid #27355a;
+        """)
         self.dir_btn = QPushButton("選擇")
         self.dir_btn.setCursor(Qt.PointingHandCursor)
-        self.dir_btn.setStyleSheet("padding:12px 44px; border-radius:16px; font-size:1.10em; background:#232b3b; color:#549cf6;")
-        row1.addWidget(QLabel("來源資料夾:", self, styleSheet=lbl_style))
+        self.dir_btn.setStyleSheet("""
+            padding:12px 44px; border-radius:16px; font-size:1.10em;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #254283, stop:1 #3963c7);
+            color:#eafbff; font-weight:600;
+        """)
+        lbl1 = QLabel("來源資料夾:", self)
+        lbl1.setStyleSheet(lbl_style)
+        row1.addWidget(lbl1)
         row1.addWidget(self.dir_edit, 2)
         row1.addWidget(self.dir_btn)
         ctl_layout.addLayout(row1)
@@ -200,42 +208,72 @@ class BVShopMainWindow(QWidget):
         row2 = QHBoxLayout()
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("帳號")
-        self.username_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#f8fafd;")
+        self.username_edit.setStyleSheet("""
+            padding:12px 22px; border-radius:15px;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; border:2px solid #27355a;
+        """)
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
         self.password_edit.setPlaceholderText("密碼")
-        self.password_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#f8fafd;")
-        row2.addWidget(QLabel("帳號:", self, styleSheet=lbl_style))
+        self.password_edit.setStyleSheet("""
+            padding:12px 22px; border-radius:15px;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; border:2px solid #27355a;
+        """)
+        lbl2a = QLabel("帳號:", self)
+        lbl2a.setStyleSheet(lbl_style)
+        lbl2b = QLabel("密碼:", self)
+        lbl2b.setStyleSheet(lbl_style)
+        row2.addWidget(lbl2a)
         row2.addWidget(self.username_edit, 1)
-        row2.addWidget(QLabel("密碼:", self, styleSheet=lbl_style))
+        row2.addWidget(lbl2b)
         row2.addWidget(self.password_edit, 1)
         ctl_layout.addLayout(row2)
 
         row3 = QHBoxLayout()
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("前台主網域（如 https://gd.bvshop.tw）")
-        self.domain_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#f8fafd;")
+        self.domain_edit.setStyleSheet("""
+            padding:12px 22px; border-radius:15px;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; border:2px solid #27355a;
+        """)
         self.threads_spin = QSpinBox()
         self.threads_spin.setMinimum(1)
         self.suggested_workers = suggest_max_workers()
         self.threads_spin.setMaximum(9999)
         self.threads_spin.setValue(self.suggested_workers)
-        self.threads_spin.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#f8fafd;")
-        row3.addWidget(QLabel("主網域:", self, styleSheet=lbl_style))
+        self.threads_spin.setStyleSheet("""
+            padding:12px 22px; border-radius:15px;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; border:2px solid #27355a;
+        """)
+        lbl3a = QLabel("主網域:", self)
+        lbl3a.setStyleSheet(lbl_style)
+        lbl3b = QLabel("同時上架數:", self)
+        lbl3b.setStyleSheet(lbl_style)
+        row3.addWidget(lbl3a)
         row3.addWidget(self.domain_edit, 2)
-        row3.addWidget(QLabel("同時上架數:", self, styleSheet=lbl_style))
+        row3.addWidget(lbl3b)
         row3.addWidget(self.threads_spin)
         ctl_layout.addLayout(row3)
 
         row4 = QHBoxLayout()
         self.headless_checkbox = QCheckBox("不需要可視化")
         self.headless_checkbox.setChecked(True)
-        self.headless_checkbox.setStyleSheet("color:#f8fafd;")
+        self.headless_checkbox.setStyleSheet("color:#f8fafd;font-size:1.12em;")
         self.behavior_mode_combo = QComboBox()
         self.behavior_mode_combo.addItems(["自動（建議）", "極速", "安全"])
-        self.behavior_mode_combo.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#f8fafd;")
+        self.behavior_mode_combo.setStyleSheet("""
+            padding:12px 22px; border-radius:15px;
+            background:qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #26324d, stop:1 #1c202a);
+            color:#f8fafd; border:2px solid #27355a;
+        """)
+        lbl4 = QLabel("上架速度模式:", self)
+        lbl4.setStyleSheet(lbl_style)
         row4.addWidget(self.headless_checkbox)
-        row4.addWidget(QLabel("上架速度模式:", self, styleSheet=lbl_style))
+        row4.addWidget(lbl4)
         row4.addWidget(self.behavior_mode_combo)
         ctl_layout.addLayout(row4)
 
@@ -257,7 +295,7 @@ class BVShopMainWindow(QWidget):
                 height: 56px;
                 border: none;
                 border-radius: 26px;
-                background: #19202b;
+                background: #1b2230;
                 text-align: center;
                 font-size: 1.36em;
                 font-weight: bold;
@@ -266,7 +304,7 @@ class BVShopMainWindow(QWidget):
                 min-width: 1100px;
             }
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #62b3ff, stop:1 #7f53ff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #69b9ff, stop:1 #7f53ff);
                 border-radius: 26px;
             }
         """)
@@ -290,7 +328,7 @@ class BVShopMainWindow(QWidget):
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
                 QPushButton {
-                    background: #232b3b;
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #243d68, stop:1 #1d2635);
                     border: none;
                     border-radius: 22px;
                     padding: 22px 78px;
@@ -299,8 +337,8 @@ class BVShopMainWindow(QWidget):
                     letter-spacing:0.03em;
                 }
                 QPushButton:hover {
-                    background: #344769;
-                    color: #7ebdff;
+                    background: #3756a8;
+                    color: #fff;
                 }
             """)
         btn_layout.addWidget(self.start_btn)
@@ -320,8 +358,8 @@ class BVShopMainWindow(QWidget):
         self.setMinimumSize(1920, 1080)
 
         app_palette = self.palette()
-        app_palette.setColor(QPalette.Window, QColor("#181a20"))
-        app_palette.setColor(QPalette.Base, QColor("#20222c"))
+        app_palette.setColor(QPalette.Window, QColor("#181c20"))
+        app_palette.setColor(QPalette.Base, QColor("#22293a"))
         app_palette.setColor(QPalette.Text, QColor("#f8fafd"))
         app_palette.setColor(QPalette.Button, QColor("#232b3b"))
         self.setPalette(app_palette)
