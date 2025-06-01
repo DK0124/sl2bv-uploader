@@ -14,7 +14,6 @@ from batch_uploader import BVShopBatchUploader
 from speed_controller import BehaviorMode
 
 CONFIG_FILE = "config.json"
-FAILED_LIST_FILE = "failed_list.json"
 
 def suggest_max_workers():
     cpu = os.cpu_count() or 2
@@ -116,7 +115,7 @@ class BVShopMainWindow(QWidget):
         self.init_ui()
         self.bv_batch_uploader = None
         self.load_config()
-        self.product_status = {}   # 存所有商品進度資料
+        self.product_status = {}   # 所有商品狀態資料
         self.product_widgets = {}  # 只存畫面上有顯示的 widget
         self.total_count = 0
         self.success_count = 0
@@ -314,7 +313,6 @@ class BVShopMainWindow(QWidget):
         self.product_status.clear()
         self.clear_widgets()
 
-        # 預先建立所有商品的狀態資料
         for p in product_dirs:
             pname = os.path.basename(p)
             self.product_status[pname] = {
@@ -346,7 +344,6 @@ class BVShopMainWindow(QWidget):
         self.update_time_estimate()
 
     def update_product_progress(self, product_name, percent, success, elapsed, detail_log):
-        # 更新資料結構
         status = self.product_status.get(product_name)
         if not status:
             return
@@ -362,16 +359,16 @@ class BVShopMainWindow(QWidget):
             status["status"] = "fail"
             self.fail_count += 1
 
-        # 決定是否顯示/移除 widget
+        # 僅顯示「進行中」和「失敗」的商品
         if status["status"] in ["pending", "fail"]:
-            if not status["widget"]:
+            if not status.get("widget"):
                 status["widget"] = ProductProgressItem(product_name)
                 self.product_widgets[product_name] = status["widget"]
                 self.re_layout_grid()
             status["widget"].update_progress(percent, detail_log)
             status["widget"].set_status(success, elapsed, detail_log)
-        else:  # 已完成則移除
-            if status["widget"]:
+        else:  # success時移除
+            if status.get("widget"):
                 self.remove_widget(product_name)
                 status["widget"] = None
 
@@ -409,7 +406,6 @@ class BVShopMainWindow(QWidget):
         )
 
     def clear_widgets(self):
-        # 從畫面移除所有商品 widget
         for i in reversed(range(self.grid_layout.count())):
             item = self.grid_layout.itemAt(i)
             if item:
@@ -444,14 +440,12 @@ class BVShopMainWindow(QWidget):
         grid_w = max(1, w // 340)
         if grid_w < 1:
             grid_w = 1
-        # 先清空
         for i in reversed(range(self.grid_layout.count())):
             item = self.grid_layout.itemAt(i)
             if item:
                 wgt = item.widget()
                 if wgt:
                     self.grid_layout.removeWidget(wgt)
-        # 重新布局
         for idx, wgt in enumerate(items):
             row = idx // grid_w
             col = idx % grid_w
