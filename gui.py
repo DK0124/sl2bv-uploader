@@ -30,15 +30,15 @@ class LogDialog(QDialog):
         self.resize(900, 600)
         layout = QVBoxLayout(self)
         label = QLabel(title)
-        label.setStyleSheet("font-weight:bold;font-size:1.14em;margin-bottom:8px; color:#a9b5c7;")
+        label.setStyleSheet("font-weight:bold;font-size:1.14em;margin-bottom:8px; color:#e6e6e6;")
         layout.addWidget(label)
         self.log_edit = QTextEdit(self)
         self.log_edit.setReadOnly(True)
         self.log_edit.setPlainText(log_text)
         self.log_edit.setStyleSheet("""
-            background: #21232a;
+            background: #23293a;
             border-radius: 20px;
-            color: #c2cbe0;
+            color: #e0e6ef;
             font-size: 1.08em;
             padding: 18px;
         """)
@@ -46,16 +46,16 @@ class LogDialog(QDialog):
         btn = QPushButton("關閉")
         btn.setStyleSheet("""
             QPushButton {
-                background: #283148;
+                background: #2a3654;
                 border: none;
                 border-radius: 15px;
                 padding: 12px 44px;
                 font-size: 1.18em;
-                color: #99c1fa;
+                color: #549cf6;
             }
             QPushButton:hover {
-                background: #2d3754;
-                color: #a7d0ff;
+                background: #344769;
+                color: #7ebdff;
             }
         """)
         btn.clicked.connect(self.accept)
@@ -74,10 +74,10 @@ class ProductProgressItem(QWidget):
 
         self.name_label = QLabel(name, self)
         self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        font = QFont("SF Pro Text", 9)
-        font.setWeight(QFont.Medium)
+        font = QFont("SF Pro Text", 10)
+        font.setWeight(QFont.DemiBold)
         self.name_label.setFont(font)
-        self.name_label.setStyleSheet("color:#667694; margin-bottom: 2px; letter-spacing:0.2px;")
+        self.name_label.setStyleSheet("color:#bcc7d5; margin-bottom: 2px; letter-spacing:0.2px;")
         layout.addWidget(self.name_label, stretch=0)
 
         stat_hbox = QHBoxLayout()
@@ -88,7 +88,7 @@ class ProductProgressItem(QWidget):
         stat_hbox.addWidget(self.status_icon)
         self.status_label = QLabel("", self)
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_label.setStyleSheet("font-size:1.09em; color: #b5c6e3; font-weight: 500;")
+        self.status_label.setStyleSheet("font-size:1.09em; color: #e6e6e6; font-weight: 500;")
         stat_hbox.addWidget(self.status_label)
         layout.addLayout(stat_hbox, stretch=0)
 
@@ -101,15 +101,15 @@ class ProductProgressItem(QWidget):
                 border-radius: 14px;
                 text-align: center;
                 font-weight: 520;
-                background: #23253b;
-                color: #c5e4fa;
-                font-size: 1.19em;
+                background: #22242c;
+                color: #2c3e50;
+                font-size: 1.15em;
                 letter-spacing:0.3px;
             }
             QProgressBar::chunk {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4da2ff, stop:0.4 #6ec8ff, stop:0.8 #7e84fa, stop:1 #4d5cc6
+                    stop:0 #62b3ff, stop:0.5 #549cf6, stop:1 #7f53ff
                 );
                 border-radius: 14px;
             }
@@ -121,16 +121,16 @@ class ProductProgressItem(QWidget):
 
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
-                border: 2.2px solid #23293a;
-                border-radius: 36px;
+                border: 2.2px solid #282b3c;
+                border-radius: 32px;
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #242a38, stop:1 #181a20
+                    stop:0 #23293a, stop:1 #1a1c23
                 );
             }
             QWidget#ProductProgressItem:hover {
-                border: 2.2px solid #7ec5ff;
-                background: #242735;
+                border: 2.2px solid #62b3ff;
+                background: #262a38;
             }
         """)
         self.setLayout(layout)
@@ -162,9 +162,7 @@ class BVShopMainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("BVShop 上架監控")
         self.resize(1920, 1080)
-        self.init_ui()
         self.bv_batch_uploader = None
-        self.load_config()
         self.product_status = {}
         self.product_widgets = {}
         self.total_count = 0
@@ -172,6 +170,9 @@ class BVShopMainWindow(QWidget):
         self.fail_count = 0
         self.start_time = None
         self.is_paused = False
+        self.has_started = False
+        self.init_ui()
+        self.load_config()
 
     def init_ui(self):
         main_layout = QVBoxLayout()
@@ -191,10 +192,10 @@ class BVShopMainWindow(QWidget):
         row1 = QHBoxLayout()
         self.dir_edit = QLineEdit()
         self.dir_edit.setPlaceholderText("來源資料夾")
-        self.dir_edit.setStyleSheet("padding:14px 28px; border-radius:18px; background:#20222c; color:#b2bfd3; font-size:1.10em;")
+        self.dir_edit.setStyleSheet("padding:14px 28px; border-radius:18px; background:#20222c; color:#e6e6e6; font-size:1.10em;")
         self.dir_btn = QPushButton("選擇")
         self.dir_btn.setCursor(Qt.PointingHandCursor)
-        self.dir_btn.setStyleSheet("padding:12px 44px; border-radius:16px; font-size:1.10em; background:#232b3b; color:#8ab4f8;")
+        self.dir_btn.setStyleSheet("padding:12px 44px; border-radius:16px; font-size:1.10em; background:#232b3b; color:#549cf6;")
         self.dir_btn.clicked.connect(self.choose_dir)
         row1.addWidget(QLabel("來源資料夾:"))
         row1.addWidget(self.dir_edit, 2)
@@ -204,11 +205,11 @@ class BVShopMainWindow(QWidget):
         row2 = QHBoxLayout()
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("帳號")
-        self.username_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
+        self.username_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#e6e6e6;")
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
         self.password_edit.setPlaceholderText("密碼")
-        self.password_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
+        self.password_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#e6e6e6;")
         row2.addWidget(QLabel("帳號:"))
         row2.addWidget(self.username_edit, 1)
         row2.addWidget(QLabel("密碼:"))
@@ -221,10 +222,10 @@ class BVShopMainWindow(QWidget):
         self.suggested_workers = suggest_max_workers()
         self.threads_spin.setMaximum(9999)
         self.threads_spin.setValue(self.suggested_workers)
-        self.threads_spin.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
+        self.threads_spin.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#e6e6e6;")
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("前台主網域（如 https://gd.bvshop.tw）")
-        self.domain_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
+        self.domain_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#e6e6e6;")
         row3.addWidget(QLabel("同時上架數:"))
         row3.addWidget(self.threads_spin)
         row3.addWidget(QLabel("主網域:"))
@@ -236,7 +237,7 @@ class BVShopMainWindow(QWidget):
         self.headless_checkbox.setChecked(True)
         self.behavior_mode_combo = QComboBox()
         self.behavior_mode_combo.addItems(["自動（建議）", "極速", "安全"])
-        self.behavior_mode_combo.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
+        self.behavior_mode_combo.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#e6e6e6;")
         row4.addWidget(self.headless_checkbox)
         row4.addWidget(QLabel("上架速度模式:"))
         row4.addWidget(self.behavior_mode_combo)
@@ -246,7 +247,7 @@ class BVShopMainWindow(QWidget):
         main_layout.addWidget(ctl_wrap)
 
         self.summary_label = QLabel("尚未開始")
-        self.summary_label.setStyleSheet("font-size: 1.33em; font-weight:600; margin-bottom:14px; color:#a9b5c7;")
+        self.summary_label.setStyleSheet("font-size: 1.33em; font-weight:600; margin-bottom:14px; color:#e6e6e6;")
         main_layout.addWidget(self.summary_label)
 
         self.overall_progress = QProgressBar()
@@ -264,15 +265,16 @@ class BVShopMainWindow(QWidget):
                 text-align: center;
                 font-size: 1.36em;
                 font-weight: bold;
-                color: #c5e4fa;
+                color: #2c3e50;
                 margin: 30px 130px 26px 130px;
                 min-width: 1100px;
             }
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4da2ff, stop:0.7 #6ec8ff, stop:1 #7e84fa);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #62b3ff, stop:0.7 #549cf6, stop:1 #7f53ff);
                 border-radius: 26px;
             }
         """)
+        self.overall_progress.setVisible(False)
         main_layout.addWidget(self.overall_progress, alignment=Qt.AlignHCenter)
 
         self.grid_container = QWidget()
@@ -284,12 +286,11 @@ class BVShopMainWindow(QWidget):
 
         btn_layout = QHBoxLayout()
         self.start_btn = QPushButton("開始批次上架")
-        self.stop_btn = QPushButton("暫停")
-        self.resume_btn = QPushButton("繼續")
-        self.resume_btn.setEnabled(False)
+        self.pause_resume_btn = QPushButton("暫停")
+        self.pause_resume_btn.setEnabled(False)
         self.retry_failed_btn = QPushButton("重跑失敗商品")
         self.exit_btn = QPushButton("結束程式")
-        for btn in [self.start_btn, self.stop_btn, self.resume_btn, self.retry_failed_btn, self.exit_btn]:
+        for btn in [self.start_btn, self.pause_resume_btn, self.retry_failed_btn, self.exit_btn]:
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
                 QPushButton {
@@ -298,25 +299,23 @@ class BVShopMainWindow(QWidget):
                     border-radius: 22px;
                     padding: 22px 78px;
                     font-size: 1.19em;
-                    color: #8ab4f8;
+                    color: #549cf6;
                     letter-spacing:0.03em;
                 }
                 QPushButton:hover {
-                    background: #2d3754;
-                    color: #a7d0ff;
+                    background: #344769;
+                    color: #7ebdff;
                 }
             """)
         btn_layout.addWidget(self.start_btn)
-        btn_layout.addWidget(self.stop_btn)
-        btn_layout.addWidget(self.resume_btn)
+        btn_layout.addWidget(self.pause_resume_btn)
         btn_layout.addWidget(self.retry_failed_btn)
         btn_layout.addWidget(self.exit_btn)
         main_layout.addLayout(btn_layout)
 
         self.setLayout(main_layout)
         self.start_btn.clicked.connect(self.start_batch_upload)
-        self.stop_btn.clicked.connect(self.pause_batch_upload)
-        self.resume_btn.clicked.connect(self.resume_batch_upload)
+        self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.retry_failed_btn.clicked.connect(self.retry_failed_uploads)
         self.exit_btn.clicked.connect(self.close)
 
@@ -327,7 +326,7 @@ class BVShopMainWindow(QWidget):
         app_palette = self.palette()
         app_palette.setColor(QPalette.Window, QColor("#181a20"))
         app_palette.setColor(QPalette.Base, QColor("#20222c"))
-        app_palette.setColor(QPalette.Text, QColor("#b8c3d1"))
+        app_palette.setColor(QPalette.Text, QColor("#e6e6e6"))
         app_palette.setColor(QPalette.Button, QColor("#232b3b"))
         self.setPalette(app_palette)
 
@@ -396,7 +395,10 @@ class BVShopMainWindow(QWidget):
         self.start_time = time.time()
         self.product_status.clear()
         self.clear_widgets()
-
+        self.has_started = True
+        self.overall_progress.setVisible(True)
+        self.pause_resume_btn.setEnabled(True)
+        self.pause_resume_btn.setText("暫停")
         for p in product_dirs:
             pname = os.path.basename(p)
             self.product_status[pname] = {
@@ -427,8 +429,6 @@ class BVShopMainWindow(QWidget):
         threading.Thread(target=runner, daemon=True).start()
         self.estimate_timer.start(1000)
         self.update_time_estimate()
-        self.resume_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
         self.is_paused = False
 
     def update_product_progress(self, product_name, percent, success, elapsed, detail_log):
@@ -474,8 +474,7 @@ class BVShopMainWindow(QWidget):
             f"全部完成：成功 {success}/{total}，失敗 {fail}　總花費 {elapsed // 60}分{elapsed % 60}秒"
         )
         self.save_failed_list(fail_list)
-        self.stop_btn.setEnabled(False)
-        self.resume_btn.setEnabled(False)
+        self.pause_resume_btn.setEnabled(False)
         self.is_paused = False
 
     def update_time_estimate(self):
@@ -494,8 +493,12 @@ class BVShopMainWindow(QWidget):
         total = self.total_count
         done = self.success_count + self.fail_count
         percent_total = int(done / total * 100) if total else 0
-        self.overall_progress.setValue(percent_total)
-        self.overall_progress.setFormat(f"{percent_total}%")
+        if self.has_started:
+            self.overall_progress.setVisible(True)
+            self.overall_progress.setValue(percent_total)
+            self.overall_progress.setFormat(f"{percent_total}%")
+        else:
+            self.overall_progress.setVisible(False)
         self.summary_label.setText(
             f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}"
         )
@@ -551,26 +554,28 @@ class BVShopMainWindow(QWidget):
         self.re_layout_grid()
         return super().resizeEvent(event)
 
-    def pause_batch_upload(self):
-        if self.bv_batch_uploader and not self.is_paused:
+    def toggle_pause_resume(self):
+        if not self.bv_batch_uploader:
+            return
+        if not self.is_paused:
             self.bv_batch_uploader.pause()
-            self.stop_btn.setEnabled(False)
-            self.resume_btn.setEnabled(True)
+            self.pause_resume_btn.setText("繼續")
             self.is_paused = True
             self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
-
-    def resume_batch_upload(self):
-        if self.bv_batch_uploader and self.is_paused:
+        else:
             self.bv_batch_uploader.resume()
-            self.resume_btn.setEnabled(False)
-            self.stop_btn.setEnabled(True)
+            self.pause_resume_btn.setText("暫停")
             self.is_paused = False
             self.summary_label.setText("⏳ 批次上架繼續進行中...")
 
     def on_paused(self):
+        self.pause_resume_btn.setText("繼續")
+        self.is_paused = True
         self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
 
     def on_resumed(self):
+        self.pause_resume_btn.setText("暫停")
+        self.is_paused = False
         self.summary_label.setText("⏳ 批次上架繼續進行中...")
 
     def retry_failed_uploads(self):
@@ -609,6 +614,10 @@ class BVShopMainWindow(QWidget):
         self.start_time = time.time()
         self.product_status = {}
         self.clear_widgets()
+        self.has_started = True
+        self.overall_progress.setVisible(True)
+        self.pause_resume_btn.setEnabled(True)
+        self.pause_resume_btn.setText("暫停")
         for p in product_dirs:
             pname = os.path.basename(p)
             self.product_status[pname] = {
@@ -638,8 +647,6 @@ class BVShopMainWindow(QWidget):
         threading.Thread(target=runner, daemon=True).start()
         self.estimate_timer.start(1000)
         self.update_time_estimate()
-        self.resume_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
         self.is_paused = False
 
     def save_failed_list(self, fail_list):
