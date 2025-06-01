@@ -27,31 +27,31 @@ class LogDialog(QDialog):
     def __init__(self, title, log_text, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{title} - 詳細Log")
-        self.resize(850, 560)
+        self.resize(900, 600)
         layout = QVBoxLayout(self)
         label = QLabel(title)
-        label.setStyleSheet("font-weight:bold;font-size:1.1em;margin-bottom:8px; color:#a9b5c7;")
+        label.setStyleSheet("font-weight:bold;font-size:1.14em;margin-bottom:8px; color:#a9b5c7;")
         layout.addWidget(label)
         self.log_edit = QTextEdit(self)
         self.log_edit.setReadOnly(True)
         self.log_edit.setPlainText(log_text)
         self.log_edit.setStyleSheet("""
-            background: #22252b;
-            border-radius: 18px;
-            color: #b8c3d1;
-            font-size: 1.07em;
-            padding: 14px;
+            background: #21232a;
+            border-radius: 20px;
+            color: #c2cbe0;
+            font-size: 1.08em;
+            padding: 18px;
         """)
         layout.addWidget(self.log_edit)
         btn = QPushButton("關閉")
         btn.setStyleSheet("""
             QPushButton {
-                background: #2c3140;
+                background: #283148;
                 border: none;
-                border-radius: 13px;
-                padding: 10px 36px;
+                border-radius: 15px;
+                padding: 12px 44px;
                 font-size: 1.18em;
-                color: #8ab4f8;
+                color: #99c1fa;
             }
             QPushButton:hover {
                 background: #2d3754;
@@ -69,66 +69,63 @@ class ProductProgressItem(QWidget):
         self.show_log_callback = show_log_callback
         self._log_text = ""
         layout = QVBoxLayout(self)
-        layout.setSpacing(7)
-        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setSpacing(8)
+        layout.setContentsMargins(30, 20, 30, 20)
 
         self.name_label = QLabel(name, self)
         self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        # 商品名稱字體極小且細灰色
-        font = QFont("SF Pro Text", 9, QFont.Medium)
+        font = QFont("SF Pro Text", 9)
+        font.setWeight(QFont.Medium)
         self.name_label.setFont(font)
-        self.name_label.setStyleSheet("color:#6d7a8b; margin-bottom: 2px; letter-spacing:0.2px;")
+        self.name_label.setStyleSheet("color:#667694; margin-bottom: 2px; letter-spacing:0.2px;")
         layout.addWidget(self.name_label, stretch=0)
 
         stat_hbox = QHBoxLayout()
-        stat_hbox.setSpacing(12)
+        stat_hbox.setSpacing(13)
         self.status_icon = QLabel("⏳", self)
-        self.status_icon.setFixedWidth(24)
+        self.status_icon.setFixedWidth(25)
         self.status_icon.setAlignment(Qt.AlignCenter)
         stat_hbox.addWidget(self.status_icon)
         self.status_label = QLabel("", self)
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_label.setStyleSheet("font-size:1.09em; color: #b7c9e0; font-weight: 500;")
+        self.status_label.setStyleSheet("font-size:1.09em; color: #b5c6e3; font-weight: 500;")
         stat_hbox.addWidget(self.status_label)
         layout.addLayout(stat_hbox, stretch=0)
 
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
-        self.progress_bar.setFixedHeight(30)
-        # 進度條色調蘋果藍綠，文字微亮
+        self.progress_bar.setFixedHeight(32)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                border-radius: 13px;
+                border-radius: 14px;
                 text-align: center;
                 font-weight: 520;
-                background: #21232c;
-                color: #bfe1ff;
+                background: #23253b;
+                color: #c5e4fa;
                 font-size: 1.19em;
                 letter-spacing:0.3px;
             }
             QProgressBar::chunk {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #53b6ff, stop:0.4 #5edbff, stop:0.8 #6e80ff, stop:1 #4f69c6
+                    stop:0 #4da2ff, stop:0.4 #6ec8ff, stop:0.8 #7e84fa, stop:1 #4d5cc6
                 );
-                border-radius: 13px;
+                border-radius: 14px;
             }
         """)
         layout.addWidget(self.progress_bar, stretch=0)
 
-        # 點擊整張卡片或進度條皆可開 log
         self.progress_bar.mousePressEvent = self.show_log
         self.mousePressEvent = self.show_log
 
-        # iPadOS 夜間風格圓角卡片
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
                 border: 2.2px solid #23293a;
-                border-radius: 35px;
+                border-radius: 36px;
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #252b37, stop:1 #181a20
+                    stop:0 #242a38, stop:1 #181a20
                 );
             }
             QWidget#ProductProgressItem:hover {
@@ -178,26 +175,26 @@ class BVShopMainWindow(QWidget):
 
     def init_ui(self):
         main_layout = QVBoxLayout()
-        main_layout.setSpacing(28)
-        main_layout.setContentsMargins(78, 54, 78, 54)
+        main_layout.setSpacing(32)
+        main_layout.setContentsMargins(90, 60, 90, 60)
 
         ctl_wrap = QFrame()
         ctl_wrap.setFrameShape(QFrame.StyledPanel)
         ctl_wrap.setStyleSheet("""
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #23293a, stop:1 #181a20);
-            border-radius: 30px; border:none;
+            border-radius: 34px; border:none;
         """)
         ctl_layout = QVBoxLayout()
-        ctl_layout.setSpacing(18)
-        ctl_layout.setContentsMargins(38, 26, 38, 26)
+        ctl_layout.setSpacing(20)
+        ctl_layout.setContentsMargins(44, 32, 44, 32)
 
         row1 = QHBoxLayout()
         self.dir_edit = QLineEdit()
         self.dir_edit.setPlaceholderText("來源資料夾")
-        self.dir_edit.setStyleSheet("padding:12px 22px; border-radius:16px; background:#20222c; color:#b2bfd3; font-size:1.07em;")
+        self.dir_edit.setStyleSheet("padding:14px 28px; border-radius:18px; background:#20222c; color:#b2bfd3; font-size:1.10em;")
         self.dir_btn = QPushButton("選擇")
         self.dir_btn.setCursor(Qt.PointingHandCursor)
-        self.dir_btn.setStyleSheet("padding:10px 40px; border-radius:15px; font-size:1.07em; background:#232b3b; color:#8ab4f8;")
+        self.dir_btn.setStyleSheet("padding:12px 44px; border-radius:16px; font-size:1.10em; background:#232b3b; color:#8ab4f8;")
         self.dir_btn.clicked.connect(self.choose_dir)
         row1.addWidget(QLabel("來源資料夾:"))
         row1.addWidget(self.dir_edit, 2)
@@ -207,11 +204,11 @@ class BVShopMainWindow(QWidget):
         row2 = QHBoxLayout()
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("帳號")
-        self.username_edit.setStyleSheet("padding:10px 16px; border-radius:12px; background:#20222c; color:#b2bfd3;")
+        self.username_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
         self.password_edit.setPlaceholderText("密碼")
-        self.password_edit.setStyleSheet("padding:10px 16px; border-radius:12px; background:#20222c; color:#b2bfd3;")
+        self.password_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
         row2.addWidget(QLabel("帳號:"))
         row2.addWidget(self.username_edit, 1)
         row2.addWidget(QLabel("密碼:"))
@@ -224,10 +221,10 @@ class BVShopMainWindow(QWidget):
         self.suggested_workers = suggest_max_workers()
         self.threads_spin.setMaximum(9999)
         self.threads_spin.setValue(self.suggested_workers)
-        self.threads_spin.setStyleSheet("padding:10px 16px; border-radius:12px; background:#20222c; color:#b2bfd3;")
+        self.threads_spin.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("前台主網域（如 https://gd.bvshop.tw）")
-        self.domain_edit.setStyleSheet("padding:10px 16px; border-radius:12px; background:#20222c; color:#b2bfd3;")
+        self.domain_edit.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
         row3.addWidget(QLabel("同時上架數:"))
         row3.addWidget(self.threads_spin)
         row3.addWidget(QLabel("主網域:"))
@@ -239,7 +236,7 @@ class BVShopMainWindow(QWidget):
         self.headless_checkbox.setChecked(True)
         self.behavior_mode_combo = QComboBox()
         self.behavior_mode_combo.addItems(["自動（建議）", "極速", "安全"])
-        self.behavior_mode_combo.setStyleSheet("padding:10px 16px; border-radius:12px; background:#20222c; color:#b2bfd3;")
+        self.behavior_mode_combo.setStyleSheet("padding:12px 22px; border-radius:15px; background:#20222c; color:#b2bfd3;")
         row4.addWidget(self.headless_checkbox)
         row4.addWidget(QLabel("上架速度模式:"))
         row4.addWidget(self.behavior_mode_combo)
@@ -260,28 +257,28 @@ class BVShopMainWindow(QWidget):
         self.overall_progress.setFormat("尚未開始")
         self.overall_progress.setStyleSheet("""
             QProgressBar {
-                height: 54px;
+                height: 56px;
                 border: none;
-                border-radius: 24px;
-                background: #1a1c24;
+                border-radius: 26px;
+                background: #19202b;
                 text-align: center;
-                font-size: 1.31em;
+                font-size: 1.36em;
                 font-weight: bold;
-                color: #bfe1ff;
-                margin: 22px 120px 18px 120px;
-                min-width: 950px;
+                color: #c5e4fa;
+                margin: 30px 130px 26px 130px;
+                min-width: 1100px;
             }
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #53b6ff, stop:0.7 #5edbff, stop:1 #6e80ff);
-                border-radius: 24px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4da2ff, stop:0.7 #6ec8ff, stop:1 #7e84fa);
+                border-radius: 26px;
             }
         """)
         main_layout.addWidget(self.overall_progress, alignment=Qt.AlignHCenter)
 
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(50)
-        self.grid_layout.setContentsMargins(56, 36, 56, 36)
+        self.grid_layout.setSpacing(54)
+        self.grid_layout.setContentsMargins(66, 40, 66, 40)
         self.grid_container.setLayout(self.grid_layout)
         main_layout.addWidget(self.grid_container, stretch=1)
 
@@ -298,9 +295,9 @@ class BVShopMainWindow(QWidget):
                 QPushButton {
                     background: #232b3b;
                     border: none;
-                    border-radius: 19px;
-                    padding: 18px 62px;
-                    font-size: 1.13em;
+                    border-radius: 22px;
+                    padding: 22px 78px;
+                    font-size: 1.19em;
                     color: #8ab4f8;
                     letter-spacing:0.03em;
                 }
@@ -334,4 +331,324 @@ class BVShopMainWindow(QWidget):
         app_palette.setColor(QPalette.Button, QColor("#232b3b"))
         self.setPalette(app_palette)
 
-    # ... 其餘業務邏輯與上述 patch 一致（略） ...
+    def choose_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "選擇來源資料夾")
+        if d:
+            self.dir_edit.setText(d)
+
+    def load_config(self):
+        if os.path.isfile(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self.username_edit.setText(data.get("username", ""))
+                self.password_edit.setText(data.get("password", ""))
+                self.domain_edit.setText(data.get("domain", ""))
+            except Exception as e:
+                print(f"載入帳密設定失敗: {e}")
+
+    def save_config(self):
+        data = {
+            "username": self.username_edit.text(),
+            "password": self.password_edit.text(),
+            "domain": self.domain_edit.text()
+        }
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception as e:
+            print(f"儲存帳密設定失敗: {e}")
+
+    def get_behavior_mode(self):
+        idx = self.behavior_mode_combo.currentIndex()
+        if idx == 0:
+            return BehaviorMode.AUTO
+        elif idx == 1:
+            return BehaviorMode.SPEED
+        else:
+            return BehaviorMode.SAFE
+
+    def start_batch_upload(self):
+        self.save_config()
+        src_dir = self.dir_edit.text()
+        username = self.username_edit.text()
+        password = self.password_edit.text()
+        threads = self.threads_spin.value()
+        domain = self.domain_edit.text().strip()
+        headless = self.headless_checkbox.isChecked()
+        behavior_mode = self.get_behavior_mode()
+        if not os.path.isdir(src_dir):
+            self.summary_label.setText("來源資料夾不存在")
+            return
+        if not domain:
+            self.summary_label.setText("請輸入主網域")
+            return
+        product_dirs = []
+        for name in os.listdir(src_dir):
+            pdir = os.path.join(src_dir, name)
+            if os.path.isdir(pdir) and \
+               os.path.exists(os.path.join(pdir, "product_info.json")) and \
+               os.path.exists(os.path.join(pdir, "product_output.json")):
+                product_dirs.append(pdir)
+        self.total_count = len(product_dirs)
+        self.success_count = 0
+        self.fail_count = 0
+        self.start_time = time.time()
+        self.product_status.clear()
+        self.clear_widgets()
+
+        for p in product_dirs:
+            pname = os.path.basename(p)
+            self.product_status[pname] = {
+                "status": "waiting", "progress": 0, "log": "", "widget": None
+            }
+        self.update_summary()
+        self.refresh_widgets()
+
+        self.bv_batch_uploader = BVShopBatchUploader(
+            src_dir=src_dir,
+            username=username,
+            password=password,
+            max_workers=threads,
+            product_domain=domain,
+            headless=headless,
+            behavior_mode=behavior_mode,
+            speed_status_callback=None,
+            round_status_callback=None
+        )
+        self.bv_batch_uploader.product_progress_signal.connect(self.update_product_progress)
+        self.bv_batch_uploader.all_done_signal.connect(self.batch_all_done)
+        self.bv_batch_uploader.paused_signal.connect(self.on_paused)
+        self.bv_batch_uploader.resumed_signal.connect(self.on_resumed)
+
+        import threading
+        def runner():
+            self.bv_batch_uploader.batch_upload()
+        threading.Thread(target=runner, daemon=True).start()
+        self.estimate_timer.start(1000)
+        self.update_time_estimate()
+        self.resume_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.is_paused = False
+
+    def update_product_progress(self, product_name, percent, success, elapsed, detail_log):
+        status = self.product_status.get(product_name)
+        if not status:
+            return
+        status["progress"] = percent
+        if detail_log:
+            status["log"] = (status["log"] + "\n" + detail_log).strip()
+        if success is None:
+            status["status"] = "running"
+        elif success:
+            status["status"] = "success"
+            self.success_count += 1
+        else:
+            status["status"] = "fail"
+            self.fail_count += 1
+
+        if status["status"] in ["running", "fail"]:
+            if not status.get("widget"):
+                status["widget"] = ProductProgressItem(product_name, self.show_log_dialog)
+                self.product_widgets[product_name] = status["widget"]
+                self.re_layout_grid()
+            status["widget"].update_progress(percent, detail_log)
+            status["widget"].set_status(success, elapsed, detail_log)
+        else:
+            if status.get("widget"):
+                self.remove_widget(product_name)
+                status["widget"] = None
+
+        self.update_summary()
+
+    def show_log_dialog(self, product_name, log_text):
+        dlg = LogDialog(product_name, log_text, self)
+        dlg.exec_()
+
+    def batch_all_done(self, total, success, fail, fail_list):
+        self.estimate_timer.stop()
+        elapsed = int(time.time() - self.start_time)
+        self.overall_progress.setValue(100)
+        self.overall_progress.setFormat("100% 已完成")
+        self.summary_label.setText(
+            f"全部完成：成功 {success}/{total}，失敗 {fail}　總花費 {elapsed // 60}分{elapsed % 60}秒"
+        )
+        self.save_failed_list(fail_list)
+        self.stop_btn.setEnabled(False)
+        self.resume_btn.setEnabled(False)
+        self.is_paused = False
+
+    def update_time_estimate(self):
+        elapsed = time.time() - self.start_time if self.start_time else 0
+        done = self.success_count + self.fail_count
+        total = self.total_count
+        if done > 0 and total > done:
+            avg = elapsed / done
+            remaining = total - done
+            left = int(avg * remaining)
+            self.summary_label.setText(
+                f"{self.summary_label.text()}　預估剩餘 {left // 60}分{left % 60}秒"
+            )
+
+    def update_summary(self):
+        total = self.total_count
+        done = self.success_count + self.fail_count
+        percent_total = int(done / total * 100) if total else 0
+        self.overall_progress.setValue(percent_total)
+        self.overall_progress.setFormat(f"{percent_total}%")
+        self.summary_label.setText(
+            f"完成 {done} / {total}　成功 {self.success_count}　失敗 {self.fail_count}"
+        )
+
+    def clear_widgets(self):
+        for i in reversed(range(self.grid_layout.count())):
+            item = self.grid_layout.itemAt(i)
+            if item:
+                wgt = item.widget()
+                if wgt:
+                    self.grid_layout.removeWidget(wgt)
+                    wgt.setParent(None)
+        self.product_widgets.clear()
+
+    def remove_widget(self, pname):
+        widget = self.product_widgets.get(pname)
+        if widget:
+            self.grid_layout.removeWidget(widget)
+            widget.setParent(None)
+            del self.product_widgets[pname]
+            self.re_layout_grid()
+
+    def refresh_widgets(self):
+        self.clear_widgets()
+        show_list = [k for k, v in self.product_status.items() if v["status"] in ["running", "fail"]]
+        for pname in show_list:
+            widget = ProductProgressItem(pname, self.show_log_dialog)
+            self.product_status[pname]["widget"] = widget
+            self.product_widgets[pname] = widget
+        self.re_layout_grid()
+
+    def re_layout_grid(self):
+        items = list(self.product_widgets.values())
+        if not items:
+            return
+        w = self.width()
+        card_width = 400
+        grid_w = max(1, w // (card_width + 28))
+        if grid_w < 1:
+            grid_w = 1
+        for i in reversed(range(self.grid_layout.count())):
+            item = self.grid_layout.itemAt(i)
+            if item:
+                wgt = item.widget()
+                if wgt:
+                    self.grid_layout.removeWidget(wgt)
+        for idx, wgt in enumerate(items):
+            row = idx // grid_w
+            col = idx % grid_w
+            self.grid_layout.addWidget(wgt, row, col)
+
+    def resizeEvent(self, event):
+        self.re_layout_grid()
+        return super().resizeEvent(event)
+
+    def pause_batch_upload(self):
+        if self.bv_batch_uploader and not self.is_paused:
+            self.bv_batch_uploader.pause()
+            self.stop_btn.setEnabled(False)
+            self.resume_btn.setEnabled(True)
+            self.is_paused = True
+            self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
+
+    def resume_batch_upload(self):
+        if self.bv_batch_uploader and self.is_paused:
+            self.bv_batch_uploader.resume()
+            self.resume_btn.setEnabled(False)
+            self.stop_btn.setEnabled(True)
+            self.is_paused = False
+            self.summary_label.setText("⏳ 批次上架繼續進行中...")
+
+    def on_paused(self):
+        self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
+
+    def on_resumed(self):
+        self.summary_label.setText("⏳ 批次上架繼續進行中...")
+
+    def retry_failed_uploads(self):
+        src_dir = self.dir_edit.text()
+        username = self.username_edit.text()
+        password = self.password_edit.text()
+        threads = self.threads_spin.value()
+        domain = self.domain_edit.text().strip()
+        headless = self.headless_checkbox.isChecked()
+        behavior_mode = self.get_behavior_mode()
+        self.summary_label.setText("重跑失敗商品中...")
+        if not os.path.isdir(src_dir):
+            self.summary_label.setText("來源資料夾不存在")
+            return
+        if not domain:
+            self.summary_label.setText("請輸入主網域")
+            return
+        if not os.path.exists(FAILED_LIST_FILE):
+            self.summary_label.setText("沒有失敗商品可重跑")
+            return
+        with open(FAILED_LIST_FILE, "r", encoding="utf-8") as f:
+            failed = json.load(f)
+        product_dirs = []
+        for name in failed:
+            pdir = os.path.join(src_dir, name)
+            if os.path.isdir(pdir) and \
+               os.path.exists(os.path.join(pdir, "product_info.json")) and \
+               os.path.exists(os.path.join(pdir, "product_output.json")):
+                product_dirs.append(pdir)
+        if not product_dirs:
+            self.summary_label.setText("失敗商品資料夾不存在或檔案不齊全")
+            return
+        self.total_count = len(product_dirs)
+        self.success_count = 0
+        self.fail_count = 0
+        self.start_time = time.time()
+        self.product_status = {}
+        self.clear_widgets()
+        for p in product_dirs:
+            pname = os.path.basename(p)
+            self.product_status[pname] = {
+                "status": "waiting", "progress": 0, "log": "", "widget": None
+            }
+        self.update_summary()
+        self.refresh_widgets()
+        self.bv_batch_uploader = BVShopBatchUploader(
+            src_dir=src_dir,
+            username=username,
+            password=password,
+            max_workers=threads,
+            product_domain=domain,
+            headless=headless,
+            only_failed=failed,
+            behavior_mode=behavior_mode,
+            speed_status_callback=None,
+            round_status_callback=None
+        )
+        self.bv_batch_uploader.product_progress_signal.connect(self.update_product_progress)
+        self.bv_batch_uploader.all_done_signal.connect(self.batch_all_done)
+        self.bv_batch_uploader.paused_signal.connect(self.on_paused)
+        self.bv_batch_uploader.resumed_signal.connect(self.on_resumed)
+        import threading
+        def runner():
+            self.bv_batch_uploader.batch_upload()
+        threading.Thread(target=runner, daemon=True).start()
+        self.estimate_timer.start(1000)
+        self.update_time_estimate()
+        self.resume_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.is_paused = False
+
+    def save_failed_list(self, fail_list):
+        failed = [item[0] for item in fail_list]
+        with open(FAILED_LIST_FILE, "w", encoding="utf-8") as f:
+            json.dump(failed, f, ensure_ascii=False, indent=2)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = BVShopMainWindow()
+    win.show()
+    sys.exit(app.exec_())
