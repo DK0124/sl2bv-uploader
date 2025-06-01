@@ -5,7 +5,7 @@ import time
 import psutil
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QFileDialog, QLineEdit, QSpinBox, QGridLayout, QScrollArea, QProgressBar, QTextEdit, QFrame, QCheckBox, QComboBox
+    QFileDialog, QLineEdit, QSpinBox, QGridLayout, QProgressBar, QTextEdit, QFrame, QCheckBox, QComboBox, QSizePolicy
 )
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont
@@ -76,15 +76,22 @@ class ProductProgressItem(QWidget):
         self.log_edit.setStyleSheet("font-size:0.93em; color:#ccc; background:#23272b; border-radius:4px;")
         layout.addWidget(self.log_edit, stretch=1)
 
+        # 美觀邊框與陰影
         self.setStyleSheet("""
-            QWidget#ProductProgressItem {
-                border: none;
-                border-radius: 8px;
-                background: #191c20;
+            QWidget#ProductProgressItem, ProductProgressItem {
+                border: 2px solid #444a;
+                border-radius: 12px;
+                background: #20232a;
+                box-shadow: 0 4px 16px 0 #0005;
+            }
+            QWidget#ProductProgressItem:hover {
+                border: 2px solid #ffb400;
+                background: #23272b;
             }
         """)
         self.setObjectName("ProductProgressItem")
         self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
     def update_progress(self, percent, detail_log):
         self.progress_bar.setValue(percent)
@@ -94,16 +101,41 @@ class ProductProgressItem(QWidget):
     def set_status(self, success, elapsed, detail_log):
         if success is None:
             self.status_icon.setText("⏳")
-            self.status_label.setText("")
-            self.setStyleSheet("border: none; border-radius: 8px; background: #191c20;")
+            self.status_label.setText("下載中")
+            self.setStyleSheet("""
+                QWidget#ProductProgressItem, ProductProgressItem {
+                    border: 2px solid #444a;
+                    border-radius: 12px;
+                    background: #20232a;
+                    box-shadow: 0 4px 16px 0 #0005;
+                }
+                QWidget#ProductProgressItem:hover {
+                    border: 2px solid #ffb400;
+                    background: #23272b;
+                }
+            """)
         elif success:
             self.status_icon.setText("✅")
             self.status_label.setText(f"<span style='color:#57e690'>上架完成</span>")
-            self.setStyleSheet("border: none; border-radius: 8px; background: #202428;")
+            self.setStyleSheet("""
+                QWidget#ProductProgressItem, ProductProgressItem {
+                    border: 2px solid #383;
+                    border-radius: 12px;
+                    background: #212825;
+                    box-shadow: 0 2px 8px 0 #0003;
+                }
+            """)
         else:
             self.status_icon.setText("❌")
             self.status_label.setText("<span style='color:#ff4444'>上架失敗</span>")
-            self.setStyleSheet("border: none; border-radius: 8px; background: #231c1c;")
+            self.setStyleSheet("""
+                QWidget#ProductProgressItem, ProductProgressItem {
+                    border: 2px solid #c44;
+                    border-radius: 12px;
+                    background: #231c1c;
+                    box-shadow: 0 2px 8px 0 #0003;
+                }
+            """)
         if detail_log:
             self.log_edit.append(detail_log)
 
@@ -213,15 +245,13 @@ class BVShopMainWindow(QWidget):
         """)
         main_layout.addWidget(self.overall_progress, alignment=Qt.AlignHCenter)
 
-        self.grid_area = QScrollArea()
-        self.grid_area.setWidgetResizable(True)
-        grid_container = QWidget()
+        # 不用 QScrollArea，直接用 QGridLayout
+        self.grid_container = QWidget()
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(12)
-        self.grid_layout.setContentsMargins(10, 10, 10, 10)
-        grid_container.setLayout(self.grid_layout)
-        self.grid_area.setWidget(grid_container)
-        main_layout.addWidget(self.grid_area, stretch=1)
+        self.grid_layout.setSpacing(18)
+        self.grid_layout.setContentsMargins(18, 18, 18, 18)
+        self.grid_container.setLayout(self.grid_layout)
+        main_layout.addWidget(self.grid_container, stretch=1)
 
         btn_layout = QHBoxLayout()
         self.start_btn = QPushButton("開始批次上架")
@@ -243,7 +273,6 @@ class BVShopMainWindow(QWidget):
             QPushButton:hover { background-color: #2e3238; }
             QLineEdit, QSpinBox { background-color: #23272b; color: #ffffff; border: none; border-radius: 4px; font-size: 1em; }
             QLabel { color: #ffffff; font-size: 1em; }
-            QScrollArea { border: none; }
             QFrame { border:none; }
         ''')
 
@@ -316,10 +345,9 @@ class BVShopMainWindow(QWidget):
         for p in product_dirs:
             pname = os.path.basename(p)
             self.product_status[pname] = {
-                "status": "pending", "progress": 0, "log": "", "widget": None
+                "status": "waiting", "progress": 0, "log": "", "widget": None
             }
         self.update_summary()
-        # 只加載進行中/失敗的商品
         self.refresh_widgets()
 
         self.bv_batch_uploader = BVShopBatchUploader(
@@ -350,8 +378,9 @@ class BVShopMainWindow(QWidget):
         status["progress"] = percent
         if detail_log:
             status["log"] = (status["log"] + "\n" + detail_log).strip()
-        if success is None:
-            status["status"] = "pending"
+        # 狀態確定
+        if success is None:         # 執行中(下載中)
+            status["status"] = "running"
         elif success:
             status["status"] = "success"
             self.success_count += 1
@@ -359,15 +388,15 @@ class BVShopMainWindow(QWidget):
             status["status"] = "fail"
             self.fail_count += 1
 
-        # 僅顯示「進行中」和「失敗」的商品
-        if status["status"] in ["pending", "fail"]:
+        # 只顯示「下載中/執行中」與「失敗」
+        if status["status"] in ["running", "fail"]:
             if not status.get("widget"):
                 status["widget"] = ProductProgressItem(product_name)
                 self.product_widgets[product_name] = status["widget"]
                 self.re_layout_grid()
             status["widget"].update_progress(percent, detail_log)
             status["widget"].set_status(success, elapsed, detail_log)
-        else:  # success時移除
+        else:
             if status.get("widget"):
                 self.remove_widget(product_name)
                 status["widget"] = None
@@ -425,7 +454,7 @@ class BVShopMainWindow(QWidget):
 
     def refresh_widgets(self):
         self.clear_widgets()
-        show_list = [k for k, v in self.product_status.items() if v["status"] in ["pending", "fail"]]
+        show_list = [k for k, v in self.product_status.items() if v["status"] in ["running", "fail"]]
         for pname in show_list:
             widget = ProductProgressItem(pname)
             self.product_status[pname]["widget"] = widget
@@ -436,8 +465,8 @@ class BVShopMainWindow(QWidget):
         items = list(self.product_widgets.values())
         if not items:
             return
-        w = self.grid_area.viewport().width()
-        grid_w = max(1, w // 340)
+        w = self.width()
+        grid_w = max(1, w // 370)
         if grid_w < 1:
             grid_w = 1
         for i in reversed(range(self.grid_layout.count())):
