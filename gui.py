@@ -73,7 +73,6 @@ class ProductProgressItem(QWidget):
 
         self.name_label = QLabel(name, self)
         self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        # 商品名稱字體極小
         font = QFont("SF Pro Display", 8)
         font.setWeight(QFont.Medium)
         self.name_label.setFont(font)
@@ -95,7 +94,6 @@ class ProductProgressItem(QWidget):
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setFixedHeight(24)
-        # 商品名稱字體 < 進度條高度（8pt < 24px）
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
@@ -116,11 +114,9 @@ class ProductProgressItem(QWidget):
         """)
         layout.addWidget(self.progress_bar, stretch=0)
 
-        # 點擊整個小卡或進度條會出現詳細 log
         self.progress_bar.mousePressEvent = self.show_log
         self.mousePressEvent = self.show_log
 
-        # iOS深色風格圓角卡片（無 box-shadow）
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
                 border: 1.5px solid #253049;
@@ -173,6 +169,7 @@ class BVShopMainWindow(QWidget):
         self.success_count = 0
         self.fail_count = 0
         self.start_time = None
+        self.is_paused = False
 
     def init_ui(self):
         main_layout = QVBoxLayout()
@@ -285,10 +282,12 @@ class BVShopMainWindow(QWidget):
 
         btn_layout = QHBoxLayout()
         self.start_btn = QPushButton("開始批次上架")
-        self.stop_btn = QPushButton("停止")
+        self.stop_btn = QPushButton("暫停")
+        self.resume_btn = QPushButton("繼續")
+        self.resume_btn.setEnabled(False)
         self.retry_failed_btn = QPushButton("重跑失敗商品")
         self.exit_btn = QPushButton("結束程式")
-        for btn in [self.start_btn, self.stop_btn, self.retry_failed_btn, self.exit_btn]:
+        for btn in [self.start_btn, self.stop_btn, self.resume_btn, self.retry_failed_btn, self.exit_btn]:
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
                 QPushButton {
@@ -306,13 +305,15 @@ class BVShopMainWindow(QWidget):
             """)
         btn_layout.addWidget(self.start_btn)
         btn_layout.addWidget(self.stop_btn)
+        btn_layout.addWidget(self.resume_btn)
         btn_layout.addWidget(self.retry_failed_btn)
         btn_layout.addWidget(self.exit_btn)
         main_layout.addLayout(btn_layout)
 
         self.setLayout(main_layout)
         self.start_btn.clicked.connect(self.start_batch_upload)
-        self.stop_btn.clicked.connect(self.stop_batch_upload)
+        self.stop_btn.clicked.connect(self.pause_batch_upload)
+        self.resume_btn.clicked.connect(self.resume_batch_upload)
         self.retry_failed_btn.clicked.connect(self.retry_failed_uploads)
         self.exit_btn.clicked.connect(self.close)
 
@@ -320,7 +321,6 @@ class BVShopMainWindow(QWidget):
         self.estimate_timer.timeout.connect(self.update_time_estimate)
         self.setMinimumSize(1920, 1080)
 
-        # 深色夜間主題
         app_palette = self.palette()
         app_palette.setColor(QPalette.Window, QColor("#191b22"))
         app_palette.setColor(QPalette.Base, QColor("#20232b"))
@@ -415,6 +415,8 @@ class BVShopMainWindow(QWidget):
         )
         self.bv_batch_uploader.product_progress_signal.connect(self.update_product_progress)
         self.bv_batch_uploader.all_done_signal.connect(self.batch_all_done)
+        self.bv_batch_uploader.paused_signal.connect(self.on_paused)
+        self.bv_batch_uploader.resumed_signal.connect(self.on_resumed)
 
         import threading
         def runner():
@@ -422,6 +424,9 @@ class BVShopMainWindow(QWidget):
         threading.Thread(target=runner, daemon=True).start()
         self.estimate_timer.start(1000)
         self.update_time_estimate()
+        self.resume_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.is_paused = False
 
     def update_product_progress(self, product_name, percent, success, elapsed, detail_log):
         status = self.product_status.get(product_name)
@@ -466,6 +471,9 @@ class BVShopMainWindow(QWidget):
             f"全部完成：成功 {success}/{total}，失敗 {fail}　總花費 {elapsed // 60}分{elapsed % 60}秒"
         )
         self.save_failed_list(fail_list)
+        self.stop_btn.setEnabled(False)
+        self.resume_btn.setEnabled(False)
+        self.is_paused = False
 
     def update_time_estimate(self):
         elapsed = time.time() - self.start_time if self.start_time else 0
@@ -540,12 +548,27 @@ class BVShopMainWindow(QWidget):
         self.re_layout_grid()
         return super().resizeEvent(event)
 
-    def stop_batch_upload(self):
-        if self.bv_batch_uploader:
-            self.bv_batch_uploader.stop()
-            self.estimate_timer.stop()
-            self.summary_label.setText("⚠️ 已強制終止所有上架任務")
-            self.overall_progress.setFormat("已終止")
+    def pause_batch_upload(self):
+        if self.bv_batch_uploader and not self.is_paused:
+            self.bv_batch_uploader.pause()
+            self.stop_btn.setEnabled(False)
+            self.resume_btn.setEnabled(True)
+            self.is_paused = True
+            self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
+
+    def resume_batch_upload(self):
+        if self.bv_batch_uploader and self.is_paused:
+            self.bv_batch_uploader.resume()
+            self.resume_btn.setEnabled(False)
+            self.stop_btn.setEnabled(True)
+            self.is_paused = False
+            self.summary_label.setText("⏳ 批次上架繼續進行中...")
+
+    def on_paused(self):
+        self.summary_label.setText("🚦 已暫停，可以按『繼續』再恢復批次上架。")
+
+    def on_resumed(self):
+        self.summary_label.setText("⏳ 批次上架繼續進行中...")
 
     def retry_failed_uploads(self):
         src_dir = self.dir_edit.text()
@@ -604,12 +627,17 @@ class BVShopMainWindow(QWidget):
         )
         self.bv_batch_uploader.product_progress_signal.connect(self.update_product_progress)
         self.bv_batch_uploader.all_done_signal.connect(self.batch_all_done)
+        self.bv_batch_uploader.paused_signal.connect(self.on_paused)
+        self.bv_batch_uploader.resumed_signal.connect(self.on_resumed)
         import threading
         def runner():
             self.bv_batch_uploader.batch_upload()
         threading.Thread(target=runner, daemon=True).start()
         self.estimate_timer.start(1000)
         self.update_time_estimate()
+        self.resume_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.is_paused = False
 
     def save_failed_list(self, fail_list):
         failed = [item[0] for item in fail_list]
