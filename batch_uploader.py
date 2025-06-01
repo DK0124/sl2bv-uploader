@@ -125,7 +125,7 @@ class BVShopBatchUploader(QObject):
         if self.round_status_callback is not None:
             self.round_status_callback(1, MAX_RETRIES)
 
-        while retries < MAX_RETRIES and all_fail:
+        while retries < MAX_RETRIES and all_fail and not self._should_stop:
             if self.round_status_callback is not None:
                 self.round_status_callback(retries+1, MAX_RETRIES)
 
@@ -135,6 +135,8 @@ class BVShopBatchUploader(QObject):
 
             # 1. 檢查檔案齊全
             for pname in all_fail:
+                if self._should_stop:
+                    break
                 pdir = pname_to_pdir[pname]
                 ok, errmsg = self.check_product_files(pdir)
                 if not ok:
@@ -143,8 +145,11 @@ class BVShopBatchUploader(QObject):
                 else:
                     checked_product_dirs.append(pdir)
 
+            if self._should_stop:
+                break
+
             # 2. Playwright流程（登入只跑一次）
-            if checked_product_dirs:
+            if checked_product_dirs and not self._should_stop:
                 sem = asyncio.Semaphore(self.max_workers)
                 async with async_playwright() as p:
                     browser = await p.chromium.launch(headless=self.headless)
@@ -189,13 +194,25 @@ class BVShopBatchUploader(QObject):
                     await context.close()
                     await browser.close()
 
-            # 3. 檢查失敗商品的 head
+            if self._should_stop:
+                break
+
+            # 3. 只對本輪剛失敗且有 slug 的商品，做一次 head 檢查（如已停止則略過）
             still_fail = []
             for pname, errmsg in fail_this_round:
+                if self._should_stop:
+                    break
                 pdir = pname_to_pdir.get(pname)
                 slug = self.get_slug(pdir) if pdir else ""
                 if slug:
+                    # 做一次（非多次 polling），並可被停止
+                    if self._should_stop:
+                        still_fail.append((pname, errmsg))
+                        continue
                     ok, status = await head_check_product_url(slug, self.product_domain)
+                    if self._should_stop:
+                        still_fail.append((pname, errmsg))
+                        continue
                     if ok:
                         self.product_progress_signal.emit(pname, 100, True, 0, f"前台已存在商品，視為成功")
                         success_this_round.append(pname)
