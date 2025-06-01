@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QLineEdit, QSpinBox, QGridLayout, QProgressBar, QFrame, QCheckBox, QComboBox, QSizePolicy, QDialog, QTextEdit
 )
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QFont, QCursor, QColor, QPalette
+from PyQt5.QtGui import QFont, QColor, QPalette
 
 from batch_uploader import BVShopBatchUploader
 from speed_controller import BehaviorMode
@@ -36,25 +36,25 @@ class LogDialog(QDialog):
         self.log_edit.setReadOnly(True)
         self.log_edit.setPlainText(log_text)
         self.log_edit.setStyleSheet("""
-            background: #f9f9fa;
-            border-radius: 18px;
-            color: #222;
-            font-size: 1.09em;
-            padding: 14px;
+            background: #22242a;
+            border-radius: 14px;
+            color: #c6c8cc;
+            font-size: 1.03em;
+            padding: 12px;
         """)
         layout.addWidget(self.log_edit)
         btn = QPushButton("關閉")
         btn.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #dbeafe, stop:1 #e0e7ef);
+                background: #222c37;
                 border: none;
-                border-radius: 12px;
+                border-radius: 10px;
                 padding: 8px 30px;
-                font-size: 1.17em;
-                color: #333;
+                font-size: 1.08em;
+                color: #a3e4ff;
             }
             QPushButton:hover {
-                background: #c7d2fe;
+                background: #2b3746;
             }
         """)
         btn.clicked.connect(self.accept)
@@ -68,47 +68,50 @@ class ProductProgressItem(QWidget):
         self.show_log_callback = show_log_callback
         self._log_text = ""
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(6)
+        layout.setContentsMargins(18, 14, 18, 14)
 
         self.name_label = QLabel(name, self)
-        self.name_label.setAlignment(Qt.AlignCenter)
-        font = QFont("SF Pro Display", 15, QFont.Bold)
+        self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # 商品名稱字體極小
+        font = QFont("SF Pro Display", 8)
+        font.setWeight(QFont.Medium)
         self.name_label.setFont(font)
-        self.name_label.setStyleSheet("margin-bottom: 6px; color: #222; letter-spacing: 1px;")
+        self.name_label.setStyleSheet("color:#8e99a8; margin-bottom: 2px; letter-spacing:0.5px;")
         layout.addWidget(self.name_label, stretch=0)
 
         stat_hbox = QHBoxLayout()
-        stat_hbox.setSpacing(14)
+        stat_hbox.setSpacing(8)
         self.status_icon = QLabel("⏳", self)
-        self.status_icon.setFixedWidth(38)
+        self.status_icon.setFixedWidth(20)
         self.status_icon.setAlignment(Qt.AlignCenter)
         stat_hbox.addWidget(self.status_icon)
         self.status_label = QLabel("", self)
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_label.setStyleSheet("font-size: 1.15em; color: #555;")
+        self.status_label.setStyleSheet("font-size:1.07em; color: #aad2fb;")
         stat_hbox.addWidget(self.status_label)
         layout.addLayout(stat_hbox, stretch=0)
 
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setFixedHeight(24)
+        # 商品名稱字體 < 進度條高度（8pt < 24px）
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                border-radius: 11px;
+                border-radius: 10px;
                 text-align: center;
-                font-weight: bold;
-                background: #ececf0;
-                color: #222;
-                font-size: 1.13em;
+                font-weight: 500;
+                background: #2c3036;
+                color: #b9eaff;
+                font-size: 1.07em;
             }
             QProgressBar::chunk {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #6ee7b7, stop:0.5 #38bdf8, stop:1 #818cf8
+                    stop:0 #33d1ff, stop:0.6 #387bff, stop:1 #7f53ff
                 );
-                border-radius: 11px;
+                border-radius: 10px;
             }
         """)
         layout.addWidget(self.progress_bar, stretch=0)
@@ -117,22 +120,19 @@ class ProductProgressItem(QWidget):
         self.progress_bar.mousePressEvent = self.show_log
         self.mousePressEvent = self.show_log
 
-        # iOS風格卡片
+        # iOS深色風格圓角卡片（無 box-shadow）
         self.setStyleSheet("""
             QWidget#ProductProgressItem {
-                border: 1.2px solid #e5e7eb;
-                border-radius: 36px;
+                border: 1.5px solid #253049;
+                border-radius: 18px;
                 background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #f8fafc, stop:1 #e0e7ef
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #232634, stop:1 #1a1d26
                 );
-                box-shadow: 0 4px 24px 0 #0001;
-                transition: box-shadow 0.4s;
             }
             QWidget#ProductProgressItem:hover {
-                border: 1.7px solid #60a5fa;
-                background: #f1f5fa;
-                box-shadow: 0 8px 36px 0 #60a5fa22;
+                border: 1.5px solid #33d1ff;
+                background: #23283a;
             }
         """)
         self.setLayout(layout)
@@ -149,10 +149,10 @@ class ProductProgressItem(QWidget):
             self.status_label.setText("下載中")
         elif success:
             self.status_icon.setText("✅")
-            self.status_label.setText(f"<span style='color:#16a34a'>上架完成</span>")
+            self.status_label.setText(f"<span style='color:#41e396'>上架完成</span>")
         else:
             self.status_icon.setText("❌")
-            self.status_label.setText("<span style='color:#ef4444'>上架失敗</span>")
+            self.status_label.setText("<span style='color:#ff6666'>上架失敗</span>")
         if detail_log:
             self._log_text += ("\n" if self._log_text else "") + detail_log
 
@@ -162,7 +162,7 @@ class ProductProgressItem(QWidget):
 class BVShopMainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("BVShop 上架監控（iOS Matrix Style）")
+        self.setWindowTitle("BVShop 上架監控（iOS Dark Matrix）")
         self.resize(1920, 1080)
         self.init_ui()
         self.bv_batch_uploader = None
@@ -182,8 +182,8 @@ class BVShopMainWindow(QWidget):
         ctl_wrap = QFrame()
         ctl_wrap.setFrameShape(QFrame.StyledPanel)
         ctl_wrap.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f1f5fa, stop:1 #dbeafe);
-            border-radius: 22px; border:none;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #232634, stop:1 #21242f);
+            border-radius: 20px; border:none;
         """)
         ctl_layout = QVBoxLayout()
         ctl_layout.setSpacing(14)
@@ -192,10 +192,10 @@ class BVShopMainWindow(QWidget):
         row1 = QHBoxLayout()
         self.dir_edit = QLineEdit()
         self.dir_edit.setPlaceholderText("來源資料夾")
-        self.dir_edit.setStyleSheet("padding:7px 15px; border-radius:10px; background:#f3f4f6; color:#222; font-size:1.09em;")
+        self.dir_edit.setStyleSheet("padding:7px 15px; border-radius:10px; background:#23283c; color:#b7d7ef; font-size:1.02em;")
         self.dir_btn = QPushButton("選擇")
-        self.dir_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.dir_btn.setStyleSheet("padding:7px 30px; border-radius:10px; font-size:1.09em; background:#e0e7ef;")
+        self.dir_btn.setCursor(Qt.PointingHandCursor)
+        self.dir_btn.setStyleSheet("padding:7px 30px; border-radius:10px; font-size:1.02em; background:#222c37; color:#a3e4ff;")
         self.dir_btn.clicked.connect(self.choose_dir)
         row1.addWidget(QLabel("來源資料夾:"))
         row1.addWidget(self.dir_edit, 2)
@@ -205,11 +205,11 @@ class BVShopMainWindow(QWidget):
         row2 = QHBoxLayout()
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("帳號")
-        self.username_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#f3f4f6; color:#222;")
+        self.username_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#23283c; color:#b7d7ef;")
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
         self.password_edit.setPlaceholderText("密碼")
-        self.password_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#f3f4f6; color:#222;")
+        self.password_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#23283c; color:#b7d7ef;")
         row2.addWidget(QLabel("帳號:"))
         row2.addWidget(self.username_edit, 1)
         row2.addWidget(QLabel("密碼:"))
@@ -222,10 +222,10 @@ class BVShopMainWindow(QWidget):
         self.suggested_workers = suggest_max_workers()
         self.threads_spin.setMaximum(9999)
         self.threads_spin.setValue(self.suggested_workers)
-        self.threads_spin.setStyleSheet("padding:7px 10px; border-radius:10px; background:#f3f4f6; color:#222;")
+        self.threads_spin.setStyleSheet("padding:7px 10px; border-radius:10px; background:#23283c; color:#b7d7ef;")
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("前台主網域（如 https://gd.bvshop.tw）")
-        self.domain_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#f3f4f6; color:#222;")
+        self.domain_edit.setStyleSheet("padding:7px 10px; border-radius:10px; background:#23283c; color:#b7d7ef;")
         row3.addWidget(QLabel("同時上架數:"))
         row3.addWidget(self.threads_spin)
         row3.addWidget(QLabel("主網域:"))
@@ -237,7 +237,7 @@ class BVShopMainWindow(QWidget):
         self.headless_checkbox.setChecked(True)
         self.behavior_mode_combo = QComboBox()
         self.behavior_mode_combo.addItems(["自動（建議）", "極速", "安全"])
-        self.behavior_mode_combo.setStyleSheet("padding:7px 10px; border-radius:10px; background:#f3f4f6; color:#222;")
+        self.behavior_mode_combo.setStyleSheet("padding:7px 10px; border-radius:10px; background:#23283c; color:#b7d7ef;")
         row4.addWidget(self.headless_checkbox)
         row4.addWidget(QLabel("上架速度模式:"))
         row4.addWidget(self.behavior_mode_combo)
@@ -247,7 +247,7 @@ class BVShopMainWindow(QWidget):
         main_layout.addWidget(ctl_wrap)
 
         self.summary_label = QLabel("尚未開始")
-        self.summary_label.setStyleSheet("font-size: 1.25em; font-weight:550; margin-bottom:10px; color:#222;")
+        self.summary_label.setStyleSheet("font-size: 1.19em; font-weight:550; margin-bottom:9px; color:#aad2fb;")
         main_layout.addWidget(self.summary_label)
 
         self.overall_progress = QProgressBar()
@@ -258,28 +258,28 @@ class BVShopMainWindow(QWidget):
         self.overall_progress.setFormat("尚未開始")
         self.overall_progress.setStyleSheet("""
             QProgressBar {
-                height: 48px;
+                height: 40px;
                 border: none;
-                border-radius: 22px;
-                background: #e0e7ef;
+                border-radius: 18px;
+                background: #1a1d26;
                 text-align: center;
-                font-size: 1.27em;
+                font-size: 1.16em;
                 font-weight: bold;
-                color: #222;
-                margin: 18px 90px 12px 90px;
-                min-width: 800px;
+                color: #aad2fb;
+                margin: 12px 60px 8px 60px;
+                min-width: 600px;
             }
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6ee7b7, stop:0.5 #38bdf8, stop:1 #818cf8);
-                border-radius: 22px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #33d1ff, stop:0.7 #387bff, stop:1 #7f53ff);
+                border-radius: 18px;
             }
         """)
         main_layout.addWidget(self.overall_progress, alignment=Qt.AlignHCenter)
 
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(40)
-        self.grid_layout.setContentsMargins(40, 26, 40, 26)
+        self.grid_layout.setSpacing(32)
+        self.grid_layout.setContentsMargins(32, 20, 32, 20)
         self.grid_container.setLayout(self.grid_layout)
         main_layout.addWidget(self.grid_container, stretch=1)
 
@@ -289,19 +289,19 @@ class BVShopMainWindow(QWidget):
         self.retry_failed_btn = QPushButton("重跑失敗商品")
         self.exit_btn = QPushButton("結束程式")
         for btn in [self.start_btn, self.stop_btn, self.retry_failed_btn, self.exit_btn]:
-            btn.setCursor(QCursor(Qt.PointingHandCursor))
+            btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
                 QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #e0e7ef, stop:1 #f1f5fa);
+                    background: #23283c;
                     border: none;
-                    border-radius: 16px;
-                    padding: 14px 42px;
-                    font-size: 1.11em;
-                    color: #222;
+                    border-radius: 12px;
+                    padding: 13px 38px;
+                    font-size: 1.02em;
+                    color: #aad2fb;
                 }
                 QPushButton:hover {
-                    background: #bae6fd;
-                    color: #222;
+                    background: #253049;
+                    color: #33d1ff;
                 }
             """)
         btn_layout.addWidget(self.start_btn)
@@ -319,11 +319,13 @@ class BVShopMainWindow(QWidget):
         self.estimate_timer = QTimer(self)
         self.estimate_timer.timeout.connect(self.update_time_estimate)
         self.setMinimumSize(1920, 1080)
-        # 系統級亮色風格
+
+        # 深色夜間主題
         app_palette = self.palette()
-        app_palette.setColor(QPalette.Window, QColor("#f8fafc"))
-        app_palette.setColor(QPalette.Base, QColor("#f8fafc"))
-        app_palette.setColor(QPalette.Text, QColor("#222"))
+        app_palette.setColor(QPalette.Window, QColor("#191b22"))
+        app_palette.setColor(QPalette.Base, QColor("#20232b"))
+        app_palette.setColor(QPalette.Text, QColor("#aad2fb"))
+        app_palette.setColor(QPalette.Button, QColor("#23283c"))
         self.setPalette(app_palette)
 
     def choose_dir(self):
@@ -519,8 +521,8 @@ class BVShopMainWindow(QWidget):
         if not items:
             return
         w = self.width()
-        card_width = 430
-        grid_w = max(1, w // (card_width + 52))
+        card_width = 400
+        grid_w = max(1, w // (card_width + 28))
         if grid_w < 1:
             grid_w = 1
         for i in reversed(range(self.grid_layout.count())):
